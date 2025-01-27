@@ -92,6 +92,7 @@ int main(int argc, char* argv[]) {
 
     while (running) {
         std::getline(std::cin, input);
+
         if (input == "exit") {
             running = false;
             queueCondition.notify_all();
@@ -123,25 +124,27 @@ int main(int argc, char* argv[]) {
         }
 
         std::istringstream iss(input);
-        std::string message, levelString;
+        std::string levelString;
         LevelMessage level = defaultLevel;
 
-        if (std::getline(iss, message, ' ')) {
-            if (std::getline(iss, levelString, ' ')) {
-                try {
-                    level = parseLogLevel(levelString);
-                } catch (const std::invalid_argument&) {
-                    std::cerr << "Invalid log level. Using default level.\n";
-                }
+        //если нет ключевых слов на первой позиции, то значит всё это сообщение. проверяем последнее значение - может быть уровнем
+        size_t lastSpacePos = input.find_last_of(' ');
+        if (lastSpacePos != std::string::npos) {
+            levelString = input.substr(lastSpacePos + 1);
+            try {
+                level = parseLogLevel(levelString);
+                input = input.substr(0, lastSpacePos); 
+            } catch (const std::invalid_argument&) {
+                level = defaultLevel;
             }
         }
 
         {
             std::lock_guard<std::mutex> lock(queueMutex);
-            messageQueue.push({message, level, std::chrono::system_clock::now()});
+            messageQueue.push({input, level, std::chrono::system_clock::now()});
         }
 
-        queueCondition.notify_one(); //будить wait, чтоб обработал событие
+        queueCondition.notify_one();
     }
 
     worker.join();
