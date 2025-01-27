@@ -28,8 +28,8 @@ Linux или совместимая среда для работы с общим
 
 Клонируйте репозиторий:
 ```
-git clone <repository_url>
-cd <repository_directory>
+git clone https://github.com/Dyncais/MessageLogger
+cd MessageLogger
 ```
 Соберите общую библиотеку:
 ```
